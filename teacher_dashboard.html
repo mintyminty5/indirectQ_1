@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🔮 Crystal Ball Escape — 선생님 대시보드</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=Cinzel:wght@600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0a1a;--card:rgba(14,9,38,.95);--purple:#7b4fff;--purple-lt:#b084ff;
+  --teal:#00e5c4;--gold:#ffd166;--text:#e8e0ff;--dim:#9088bb;
+  --ok:#00c97a;--err:#ff4d6d;--border:rgba(123,79,255,.35);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:1.5rem;}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse 60% 40% at 15% 20%,rgba(80,40,160,.25) 0%,transparent 70%),
+             radial-gradient(ellipse 50% 50% at 85% 80%,rgba(0,100,120,.15) 0%,transparent 70%);z-index:0;}
+
+/* HEADER */
+.header{position:relative;z-index:10;display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:12px;margin-bottom:1.5rem;}
+.header-title{font-family:'Cinzel',serif;color:var(--gold);font-size:1.1rem;letter-spacing:.06em;
+  text-shadow:0 0 20px rgba(255,209,102,.4);}
+.live-badge{display:flex;align-items:center;gap:6px;background:rgba(0,201,122,.15);
+  border:1px solid rgba(0,201,122,.4);padding:5px 12px;border-radius:20px;font-size:.78rem;color:var(--ok);}
+.live-dot{width:8px;height:8px;border-radius:50%;background:var(--ok);animation:livePulse 1.2s ease-in-out infinite;}
+@keyframes livePulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+
+/* STAT CARDS */
+.stats{position:relative;z-index:10;display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:1.4rem;}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1rem;text-align:center;}
+.stat-val{font-size:1.8rem;font-weight:700;color:var(--gold);}
+.stat-label{font-size:.72rem;color:var(--dim);margin-top:4px;}
+
+/* TABLE */
+.table-wrap{position:relative;z-index:10;background:var(--card);border:1px solid var(--border);
+  border-radius:16px;overflow:hidden;overflow-x:auto;}
+table{width:100%;border-collapse:collapse;min-width:560px;}
+thead th{padding:10px 10px;font-size:.72rem;font-weight:700;color:var(--dim);
+  border-bottom:1px solid var(--border);background:rgba(123,79,255,.08);
+  text-align:center;letter-spacing:.05em;white-space:nowrap;}
+thead th:first-child{text-align:left;padding-left:16px;}
+tbody tr{border-bottom:1px solid rgba(123,79,255,.1);transition:background .15s;}
+tbody tr:hover{background:rgba(123,79,255,.07);}
+tbody tr:last-child{border-bottom:none;}
+tbody td{padding:9px 10px;font-size:.85rem;text-align:center;vertical-align:middle;}
+tbody td:first-child{text-align:left;padding-left:16px;font-weight:500;}
+
+/* DOTS */
+.dot{width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;
+  justify-content:center;font-size:.7rem;font-weight:700;}
+.d-done{background:rgba(0,201,122,.2);border:1px solid var(--ok);color:var(--ok);}
+.d-cur{background:rgba(123,79,255,.25);border:1px solid var(--purple-lt);color:var(--purple-lt);
+  animation:curPulse 1.5s ease-in-out infinite;}
+@keyframes curPulse{0%,100%{box-shadow:0 0 0 rgba(123,79,255,0);}50%{box-shadow:0 0 8px rgba(123,79,255,.6);}}
+.d-none{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:var(--dim);}
+.d-end{background:rgba(255,209,102,.2);border:1px solid var(--gold);color:var(--gold);}
+
+/* VER BADGE */
+.ver{padding:2px 8px;border-radius:10px;font-size:.7rem;font-weight:700;}
+.verA{background:rgba(0,229,196,.15);color:var(--teal);border:1px solid rgba(0,229,196,.4);}
+.verB{background:rgba(255,209,102,.12);color:var(--gold);border:1px solid rgba(255,209,102,.35);}
+
+/* ROOM HEADERS */
+.room-th{font-family:'Noto Sans KR',sans-serif;}
+.wh-label{display:block;font-size:.65rem;color:rgba(176,132,255,.6);font-weight:400;margin-top:1px;}
+
+/* EMPTY */
+.empty{text-align:center;padding:3rem;color:var(--dim);font-size:.9rem;}
+
+/* REFRESH */
+.refresh-btn{background:rgba(123,79,255,.15);border:1px solid var(--border);color:var(--dim);
+  padding:6px 14px;border-radius:8px;font-size:.78rem;cursor:pointer;transition:.2s;
+  font-family:'Noto Sans KR',sans-serif;}
+.refresh-btn:hover{background:rgba(123,79,255,.3);color:var(--text);}
+
+/* LEGEND */
+.legend{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:1rem;position:relative;z-index:10;}
+.leg{display:flex;align-items:center;gap:6px;font-size:.75rem;color:var(--dim);}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="header-title">🔮 Crystal Ball Escape — 선생님 대시보드</div>
+    <div style="font-size:.75rem;color:var(--dim);margin-top:3px;">실시간 학생 진행 현황</div>
+  </div>
+  <div style="display:flex;gap:8px;align-items:center;">
+    <div class="live-badge"><div class="live-dot"></div>LIVE</div>
+    <button class="refresh-btn" onclick="location.reload()">↺ 새로고침</button>
+  </div>
+</div>
+
+<div class="stats">
+  <div class="stat"><div class="stat-val" id="s-total">0</div><div class="stat-label">접속 학생</div></div>
+  <div class="stat"><div class="stat-val" id="s-done">0</div><div class="stat-label">완주 🎉</div></div>
+  <div class="stat"><div class="stat-val" id="s-avg">—</div><div class="stat-label">평균 방</div></div>
+  <div class="stat"><div class="stat-val" id="s-verA">0</div><div class="stat-label">버전 A</div></div>
+  <div class="stat"><div class="stat-val" id="s-verB">0</div><div class="stat-label">버전 B</div></div>
+</div>
+
+<div class="legend">
+  <div class="leg"><div class="dot d-done">✓</div> 클리어</div>
+  <div class="leg"><div class="dot d-cur">▶</div> 진행중</div>
+  <div class="leg"><div class="dot d-none">—</div> 미도달</div>
+  <div class="leg"><div class="dot d-end">🎉</div> 완주</div>
+</div>
+
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th style="min-width:100px;">이름</th>
+        <th>버전</th>
+        <th class="room-th">R1<span class="wh-label">where</span></th>
+        <th class="room-th">R2<span class="wh-label">who</span></th>
+        <th class="room-th">R3<span class="wh-label">what</span></th>
+        <th class="room-th">R4<span class="wh-label">where</span></th>
+        <th class="room-th">R5<span class="wh-label">when</span></th>
+        <th class="room-th">R6<span class="wh-label">why</span></th>
+        <th>최근 업데이트</th>
+      </tr>
+    </thead>
+    <tbody id="tbody">
+      <tr><td colspan="9" class="empty">Firebase 연결 중...</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- Firebase CDN (compat) -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyCEcN-9cGWAGCMrniN4jj8E_OXtZk962ds",
+  authDomain: "crystal-ball-escape.firebaseapp.com",
+  databaseURL: "https://crystal-ball-escape-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "crystal-ball-escape",
+  storageBucket: "crystal-ball-escape.firebasestorage.app",
+  messagingSenderId: "30013119108",
+  appId: "1:30013119108:web:60ac71d85bd216beff80d1"
+};
+firebase.initializeApp(firebaseConfig);
+
+function dot(roomDone, isCurrent, isFinished){
+  if(isFinished) return `<div class="dot d-end" title="완주">🎉</div>`;
+  if(isCurrent)  return `<div class="dot d-cur" title="진행중">▶</div>`;
+  if(roomDone)   return `<div class="dot d-done" title="클리어">✓</div>`;
+  return `<div class="dot d-none" title="미도달">—</div>`;
+}
+
+function timeAgo(ts){
+  const diff=Math.floor((Date.now()-ts)/1000);
+  if(diff<60) return diff+'초 전';
+  if(diff<3600) return Math.floor(diff/60)+'분 전';
+  return Math.floor(diff/3600)+'시간 전';
+}
+
+firebase.database().ref('students').on('value', snap=>{
+  const data=snap.val();
+  const tbody=document.getElementById('tbody');
+
+  if(!data){
+    tbody.innerHTML='<tr><td colspan="9" class="empty">아직 입장한 학생이 없어요 🔮</td></tr>';
+    updateStats([]);
+    return;
+  }
+
+  const students=Object.values(data).sort((a,b)=>b.updatedAt-a.updatedAt);
+  updateStats(students);
+
+  tbody.innerHTML=students.map(s=>{
+    const cur=s.finished ? 7 : (s.room||1);
+    const verBadge=s.version==='B'
+      ? `<span class="ver verB">B</span>`
+      : `<span class="ver verA">A</span>`;
+
+    const rooms=[1,2,3,4,5,6].map(r=>{
+      const done=cur>r;
+      const active=!s.finished&&cur===r;
+      return `<td>${dot(done,active,s.finished&&r===6)}</td>`;
+    }).join('');
+
+    return `<tr>
+      <td>${s.name||'—'}</td>
+      <td>${verBadge}</td>
+      ${rooms}
+      <td style="font-size:.72rem;color:var(--dim);white-space:nowrap;">${timeAgo(s.updatedAt)}</td>
+    </tr>`;
+  }).join('');
+});
+
+function updateStats(students){
+  document.getElementById('s-total').textContent=students.length;
+  document.getElementById('s-done').textContent=students.filter(s=>s.finished).length;
+  document.getElementById('s-verA').textContent=students.filter(s=>s.version==='A').length;
+  document.getElementById('s-verB').textContent=students.filter(s=>s.version==='B').length;
+  const avg=students.length
+    ? (students.reduce((a,s)=>a+(s.room||1),0)/students.length).toFixed(1)
+    : '—';
+  document.getElementById('s-avg').textContent=avg;
+}
+</script>
+</body>
+</html>
